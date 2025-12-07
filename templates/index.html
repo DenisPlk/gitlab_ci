@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестовый стенд</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Управление тестовым стендом</h1>
+        
+        <div class="controls">
+            <button onclick="sendCommand('on')">Включить</button>
+            <button onclick="sendCommand('off')">Выключить</button>
+            <button onclick="sendCommand('temp')">Температура</button>
+            <button onclick="sendCommand('status')">Статус</button>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="voltage" placeholder="Напряжение (В)">
+            <button onclick="sendCommand('set_v', document.getElementById('voltage').value)">
+                Уст. напряжение
+            </button>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="current" placeholder="Ток (А)">
+            <button onclick="sendCommand('set_i', document.getElementById('current').value)">
+                Уст. ток
+            </button>
+        </div>
+
+        <div id="output" class="output">
+            <p>Здесь будет вывод команд...</p>
+        </div>
+    </div>
+
+    <script>
+        function sendCommand(cmd, arg = null) {
+            fetch("/api/command", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ command: cmd, argument: arg })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const output = document.getElementById("output");
+                if (data.success) {
+                    if (cmd === "status") {
+                        output.innerHTML = `
+                            <p>Питание: ${data.status.power}</p>
+                            <p>Напряжение: ${data.status.voltage} В</p>
+                            <p>Ток: ${data.status.current} А</p>
+                            <p>Температура: ${data.status.temperature} °C</p>
+                        `;
+                    } else {
+                        output.innerHTML = `<p>${data.message}</p>`;
+                    }
+                } else {
+                    output.innerHTML = `<p style="color: red;">Ошибка: ${data.message}</p>`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
